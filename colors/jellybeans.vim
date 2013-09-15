@@ -66,9 +66,9 @@ endif
 " Color approximation functions by Henry So, Jr. and David Liang {{{
 " Added to jellybeans.vim by Daniel Herbert
 
-" returns an approximate grey index for the given grey level
-fun! s:grey_number(x)
-  if &t_Co == 88
+if &t_Co == 88
+  " returns an approximate grey index for the given grey level
+  fun! s:grey_number(x)
     if a:x < 23
       return 0
     elseif a:x < 69
@@ -90,24 +90,10 @@ fun! s:grey_number(x)
     else
       return 9
     endif
-  else
-    if a:x < 14
-      return 0
-    else
-      let l:n = (a:x - 8) / 10
-      let l:m = (a:x - 8) % 10
-      if l:m < 5
-        return l:n
-      else
-        return l:n + 1
-      endif
-    endif
-  endif
-endfun
+  endfun
 
-" returns the actual grey level represented by the grey index
-fun! s:grey_level(n)
-  if &t_Co == 88
+  " returns the actual grey level represented by the grey index
+  fun! s:grey_level(n)
     if a:n == 0
       return 0
     elseif a:n == 1
@@ -129,18 +115,10 @@ fun! s:grey_level(n)
     else
       return 255
     endif
-  else
-    if a:n == 0
-      return 0
-    else
-      return 8 + (a:n * 10)
-    endif
-  endif
-endfun
+  endfun
 
-" returns the palette index for the given grey index
-fun! s:grey_color(n)
-  if &t_Co == 88
+  " returns the palette index for the given grey index
+  fun! s:grey_color(n)
     if a:n == 0
       return 16
     elseif a:n == 9
@@ -148,20 +126,10 @@ fun! s:grey_color(n)
     else
       return 79 + a:n
     endif
-  else
-    if a:n == 0
-      return 16
-    elseif a:n == 25
-      return 231
-    else
-      return 231 + a:n
-    endif
-  endif
-endfun
+  endfun
 
-" returns an approximate color index for the given color level
-fun! s:rgb_number(x)
-  if &t_Co == 88
+  " returns an approximate color index for the given color level
+  fun! s:rgb_number(x)
     if a:x < 69
       return 0
     elseif a:x < 172
@@ -171,24 +139,10 @@ fun! s:rgb_number(x)
     else
       return 3
     endif
-  else
-    if a:x < 75
-      return 0
-    else
-      let l:n = (a:x - 55) / 40
-      let l:m = (a:x - 55) % 40
-      if l:m < 20
-        return l:n
-      else
-        return l:n + 1
-      endif
-    endif
-  endif
-endfun
+  endfun
 
-" returns the actual color level for the given color index
-fun! s:rgb_level(n)
-  if &t_Co == 88
+  " returns the actual color level for the given color index
+  fun! s:rgb_level(n)
     if a:n == 0
       return 0
     elseif a:n == 1
@@ -198,23 +152,65 @@ fun! s:rgb_level(n)
     else
       return 255
     endif
-  else
+  endfun
+
+  " returns the palette index for the given R/G/B color indices
+  fun! s:rgb_color(x, y, z)
+    return 16 + (a:x * 16) + (a:y * 4) + a:z
+  endfun
+else
+  " returns the actual grey level represented by the grey index
+  fun! s:grey_level(n)
+    if a:n == 0
+      return 0
+    else
+      return 8 + (a:n * 10)
+    endif
+  endfun
+
+  " returns an approximate grey index for the given grey level
+  fun! s:grey_number(x)
+    if a:x < 14
+      return 0
+    else
+      return (a:x - 8) / 10 + ((a:x - 8) % 10 >= 5)
+    endif
+  endfun
+
+  " returns the palette index for the given grey index
+  fun! s:grey_color(n)
+    if a:n == 0
+      return 16
+    elseif a:n == 25
+      return 231
+    else
+      return 231 + a:n
+    endif
+  endfun
+
+  " returns an approximate color index for the given color level
+  fun! s:rgb_number(x)
+    if a:x < 75
+      return 0
+    else
+      return (a:x - 55) / 40 + ((a:x - 55) % 40 >= 20)
+    endif
+  endfun
+
+  " returns the actual color level for the given color index
+  fun! s:rgb_level(n)
     if a:n == 0
       return 0
     else
       return 55 + (a:n * 40)
     endif
-  endif
-endfun
+  endfun
 
-" returns the palette index for the given R/G/B color indices
-fun! s:rgb_color(x, y, z)
-  if &t_Co == 88
-    return 16 + (a:x * 16) + (a:y * 4) + a:z
-  else
+  " returns the palette index for the given R/G/B color indices
+  fun! s:rgb_color(x, y, z)
     return 16 + (a:x * 36) + (a:y * 6) + a:z
-  endif
-endfun
+  endfun
+endif
 
 " returns the palette index to approximate the given R/G/B color levels
 fun! s:color(r, g, b)
@@ -234,28 +230,26 @@ fun! s:color(r, g, b)
     let l:dgg = s:grey_level(l:gy) - a:g
     let l:dgb = s:grey_level(l:gz) - a:b
     let l:dgrey = (l:dgr * l:dgr) + (l:dgg * l:dgg) + (l:dgb * l:dgb)
+
     let l:dr = s:rgb_level(l:gx) - a:r
     let l:dg = s:rgb_level(l:gy) - a:g
     let l:db = s:rgb_level(l:gz) - a:b
     let l:drgb = (l:dr * l:dr) + (l:dg * l:dg) + (l:db * l:db)
+
     if l:dgrey < l:drgb
       " use the grey
       return s:grey_color(l:gx)
-    else
-      " use the color
-      return s:rgb_color(l:x, l:y, l:z)
     endif
-  else
-    " only one possibility
-    return s:rgb_color(l:x, l:y, l:z)
   endif
+
+  return s:rgb_color(l:x, l:y, l:z)
 endfun
 
 " returns the palette index to approximate the 'rrggbb' hex string
 fun! s:rgb(rgb)
-  let l:r = ("0x" . strpart(a:rgb, 0, 2)) + 0
-  let l:g = ("0x" . strpart(a:rgb, 2, 2)) + 0
-  let l:b = ("0x" . strpart(a:rgb, 4, 2)) + 0
+  let l:r = ("0x" . a:rgb[0:1]) + 0
+  let l:g = ("0x" . a:rgb[2:3]) + 0
+  let l:b = ("0x" . a:rgb[4:5]) + 0
   return s:color(l:r, l:g, l:b)
 endfun
 
